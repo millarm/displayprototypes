@@ -1,71 +1,91 @@
-const STORAGE_KEY = 'note-deck.notes.v1';
-
-const sampleNotes = [
-  { id: 'sample-1', text: 'A thought worth keeping.\n\nCreate your first card using New note.', createdAt: 'Example', sample: true },
-  { id: 'sample-2', text: 'Say it while this app is open.\n\nWhen available, Meta AI can add a card for you.', createdAt: 'Example', sample: true },
-  { id: 'sample-3', text: 'Move through the deck with left and right.\n\nSelect the front card to edit it.', createdAt: 'Example', sample: true },
-];
+const STORAGE_KEY = 'note-deck.state.v2';
+const LEGACY_STORAGE_KEY = 'note-deck.notes.v1';
+const emptyCard = {
+  id: 'empty-card',
+  text: 'No notes yet\n\nCreate your first note below.',
+  createdAt: '',
+  sample: true,
+  number: null
+};
 
 const deck = document.getElementById('deck');
-const count = document.getElementById('card-count');
-const positionLabel = document.getElementById('position-label');
 const status = document.getElementById('status');
-const previousButton = document.getElementById('previous-card');
-const nextButton = document.getElementById('next-card');
 const newButton = document.getElementById('new-note');
 const editor = document.getElementById('note-editor');
-const noteForm = document.getElementById('note-form');
-const editorTitle = document.getElementById('editor-title');
+const editorNumber = document.getElementById('editor-number');
 const noteText = document.getElementById('note-text');
 const deleteButton = document.getElementById('delete-note');
-const editorFields = document.getElementById('editor-fields');
 const deleteConfirm = document.getElementById('delete-confirm');
 
-let notes = readNotes();
+function validNote(note) {
+  return note && typeof note.id === 'string' && typeof note.text === 'string' && typeof note.createdAt === 'string';
+}
+
+function readState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if (saved && Array.isArray(saved.notes)) {
+      const savedNotes = saved.notes.filter(note => validNote(note) && Number.isInteger(note.number) && note.number > 0);
+      const largest = Math.max(0, ...savedNotes.map(note => note.number));
+      return {
+        notes: savedNotes,
+        nextNumber: Math.max(largest + 1, Number.isInteger(saved.nextNumber) ? saved.nextNumber : 1),
+        migrated: false
+      };
+    }
+
+    const legacy = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY) || '[]');
+    if (Array.isArray(legacy)) {
+      const legacyNotes = legacy.filter(validNote);
+      const ordered = legacyNotes.map((note, index) => ({ note, index })).sort((a, b) => {
+        const first = Date.parse(a.note.createdAt);
+        const second = Date.parse(b.note.createdAt);
+        return ((Number.isNaN(first) ? 0 : first) - (Number.isNaN(second) ? 0 : second)) || b.index - a.index;
+      });
+      ordered.forEach(({ note }, index) => { note.number = index + 1; });
+      return { notes: legacyNotes, nextNumber: legacyNotes.length + 1, migrated: legacyNotes.length > 0 };
+    }
+  } catch {
+    // Start with an empty deck if browser storage is unavailable or malformed.
+  }
+  return { notes: [], nextNumber: 1, migrated: false };
+}
+
+const initialState = readState();
+let notes = initialState.notes;
+let nextNumber = initialState.nextNumber;
 let selectedIndex = 0;
 let editingId = null;
 let pointerStart = null;
-const renderedCards = new Map();
+let editorHistoryActive = false;
 let renderVersion = 0;
+const renderedCards = new Map();
 
-function readNotes() {
+function persistState() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(note => note && typeof note.id === 'string' && typeof note.text === 'string' && typeof note.createdAt === 'string');
-  } catch {
-    return [];
-  }
-}
-
-function persistNotes() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes, nextNumber }));
     return true;
   } catch {
-    status.textContent = 'This browser could not save the note. Storage may be unavailable.';
+    status.textContent = 'This device could not save the note. Keep this screen open and try again.';
     return false;
   }
 }
 
-function shownNotes() { return notes.length ? notes : sampleNotes; }
-
+function shownNotes() { return notes.length ? notes : [emptyCard]; }
 function titleFor(text) {
-  const firstLine = text.trim().split(/\n/)[0].trim();
-  return firstLine.length > 48 ? `${firstLine.slice(0, 47).trimEnd()}…` : firstLine;
+  const firstLine = text.trim().split('\n')[0].trim() || 'Untitled note';
+  return firstLine.length > 48 ? firstLine.slice(0, 47).trimEnd() + '…' : firstLine;
 }
-
 function bodyFor(text) {
   const lineBreak = text.indexOf('\n');
   return lineBreak < 0 ? '' : text.slice(lineBreak + 1).trim();
 }
-
 function formatDate(value) {
-  if (value === 'Example') return 'EXAMPLE CARD';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
+  return Number.isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric', month: 'short', year: 'numeric'
+  }).format(date);
 }
-
 function createTextElement(tag, className, value) {
   const element = document.createElement(tag);
   element.className = className;
@@ -73,7 +93,7 @@ function createTextElement(tag, className, value) {
   return element;
 }
 
-function createCard(note) {
+function createCard() {
   const anchor = document.createElement('div');
   anchor.className = 'card-anchor';
   const card = document.createElement('button');
@@ -90,29 +110,32 @@ function updateCard(entry, note, index, offset) {
   const visible = Math.abs(offset) <= 2;
   anchor.dataset.current = String(offset === 0);
   anchor.dataset.visible = String(visible);
-  anchor.setAttribute('aria-hidden', String(!visible));
-  anchor.style.setProperty('--angle', `${position * 15}deg`);
+  anchor.setAttribute('aria-hidden', String(offset !== 0));
+  anchor.style.setProperty('--angle', position * 15 + 'deg');
   anchor.style.setProperty('--layer', String(10 - Math.abs(position)));
   anchor.style.setProperty('--opacity', visible ? String(1 - Math.abs(position) * .13) : '0');
   anchor.style.setProperty('--scale', String(1 - Math.abs(position) * .07));
-  card.tabIndex = visible ? 0 : -1;
-  card.setAttribute('aria-label', `${offset === 0 ? (note.sample ? 'Create a note from example' : 'Edit') : 'Show'} card ${index + 1}: ${titleFor(note.text)}`);
-  const contentKey = `${note.text}\n${note.createdAt}`;
+  card.tabIndex = offset === 0 ? 0 : -1;
+  card.setAttribute('aria-label', note.sample ? 'Create your first note' : 'Open note ' + note.number + ': ' + titleFor(note.text));
+
+  const contentKey = note.number + '\n' + note.text + '\n' + note.createdAt;
   if (entry.contentKey !== contentKey) {
     entry.contentKey = contentKey;
     card.replaceChildren();
-    card.append(createTextElement('div', 'card-topline', ''));
-    card.firstChild.append(
-      createTextElement('span', 'card-index', String(index + 1).padStart(2, '0')),
-      createTextElement('span', 'card-kind', note.sample ? 'Example' : 'Note')
+    const topLine = createTextElement('div', 'card-topline', '');
+    topLine.append(
+      createTextElement('span', 'card-index', note.number === null ? '' : String(note.number)),
+      createTextElement('span', 'card-kind', note.sample ? 'Note Deck' : 'Note')
     );
     card.append(
+      topLine,
       createTextElement('div', 'card-rule', ''),
       createTextElement('h2', 'card-title', titleFor(note.text)),
       createTextElement('p', 'card-body', bodyFor(note.text)),
       createTextElement('div', 'card-date', formatDate(note.createdAt))
     );
   }
+
   card.onclick = () => {
     const currentIndex = shownNotes().findIndex(item => item.id === note.id);
     if (currentIndex < 0) return;
@@ -133,7 +156,7 @@ function render(previousIndex = selectedIndex) {
     needed.add(note.id);
     let entry = renderedCards.get(note.id);
     if (!entry) {
-      entry = createCard(note);
+      entry = createCard();
       renderedCards.set(note.id, entry);
       const initialOffset = index - previousIndex;
       updateCard(entry, note, index, Math.abs(initialOffset) > 2 ? initialOffset : offset);
@@ -154,7 +177,12 @@ function render(previousIndex = selectedIndex) {
     const exitOffset = oldOffset < 0 ? -3 : 3;
     const oldNote = items.find(note => note.id === id);
     if (oldNote) updateCard(entry, oldNote, items.indexOf(oldNote), exitOffset);
-    else entry.anchor.style.setProperty('--opacity', '0');
+    else {
+      entry.anchor.style.setProperty('--opacity', '0');
+      entry.anchor.setAttribute('aria-hidden', 'true');
+      entry.card.tabIndex = -1;
+      entry.card.style.pointerEvents = 'none';
+    }
     setTimeout(() => {
       const currentItems = shownNotes();
       const currentIndex = currentItems.findIndex(note => note.id === id);
@@ -164,11 +192,11 @@ function render(previousIndex = selectedIndex) {
       }
     }, 400);
   }
+}
 
-  count.textContent = notes.length ? `${notes.length} ${notes.length === 1 ? 'card' : 'cards'}` : 'Your deck';
-  positionLabel.textContent = `${selectedIndex + 1} / ${items.length}`;
-  previousButton.disabled = selectedIndex === 0;
-  nextButton.disabled = selectedIndex === items.length - 1;
+function focusFrontCard() {
+  const current = shownNotes()[selectedIndex];
+  renderedCards.get(current.id)?.card.focus({ preventScroll: true });
 }
 
 function selectCard(index) {
@@ -177,78 +205,119 @@ function selectCard(index) {
   const previousIndex = selectedIndex;
   selectedIndex = index;
   render(previousIndex);
-  status.textContent = `Card ${index + 1} of ${items.length}: ${titleFor(items[index].text)}`;
+  focusFrontCard();
+  status.textContent = items[index].sample ? 'No notes yet.' : 'Note ' + items[index].number + ' of ' + notes.length + '.';
 }
 
 function openEditor(id = null) {
   editingId = id;
   const note = notes.find(item => item.id === id);
-  editorTitle.textContent = note ? 'Edit note' : 'New note';
   noteText.value = note?.text || '';
+  editorNumber.textContent = String(note?.number || nextNumber);
   deleteButton.hidden = !note;
-  editorFields.hidden = false;
   deleteConfirm.hidden = true;
   editor.showModal();
-  noteText.focus();
+  history.pushState({ noteDeckEditor: true }, '');
+  editorHistoryActive = true;
+  noteText.focus({ preventScroll: true });
+  requestAnimationFrame(() => noteText.focus({ preventScroll: true }));
 }
 
-function closeEditor() {
-  editor.close();
-  editingId = null;
-  newButton.focus();
-}
-
-function saveNote(content) {
-  const text = String(content || '').trim();
-  if (!text) return false;
-  if (text.length > 1500) {
-    status.textContent = 'Notes must be 1,500 characters or fewer.';
-    return false;
-  }
-
+function saveDraft() {
+  const text = noteText.value;
+  if (!editingId && !text.trim()) return true;
   const oldNotes = notes;
+  const oldNextNumber = nextNumber;
+  const oldEditingId = editingId;
   const existingIndex = notes.findIndex(note => note.id === editingId);
+
+  if (editingId && existingIndex < 0) return false;
   if (existingIndex >= 0) {
     notes = notes.map((note, index) => index === existingIndex ? { ...note, text } : note);
-    selectedIndex = existingIndex;
   } else {
-    notes = [{ id: crypto.randomUUID?.() || String(Date.now()), text, createdAt: new Date().toISOString() }, ...notes];
+    const id = crypto.randomUUID?.() || String(Date.now());
+    notes = [{ id, number: nextNumber, text, createdAt: new Date().toISOString() }, ...notes];
+    editingId = id;
     selectedIndex = 0;
+    nextNumber += 1;
   }
-  if (!persistNotes()) { notes = oldNotes; return false; }
-  render();
-  status.textContent = existingIndex >= 0 ? 'Card updated.' : 'Card saved.';
+
+  if (!persistState()) {
+    notes = oldNotes;
+    nextNumber = oldNextNumber;
+    editingId = oldEditingId;
+    return false;
+  }
+  deleteButton.hidden = false;
+  editorNumber.textContent = String(notes.find(note => note.id === editingId)?.number || nextNumber);
   return true;
 }
 
-previousButton.addEventListener('click', () => selectCard(selectedIndex - 1));
-nextButton.addEventListener('click', () => selectCard(selectedIndex + 1));
-newButton.addEventListener('click', () => openEditor());
-document.getElementById('close-editor').addEventListener('click', closeEditor);
+function finishEditor(fromHistory = false) {
+  if (!editor.open || !saveDraft()) return;
+  editor.close();
+  editingId = null;
+  deleteConfirm.hidden = true;
+  render();
+  focusFrontCard();
+  if (editorHistoryActive && !fromHistory) history.back();
+  editorHistoryActive = false;
+}
 
-noteForm.addEventListener('submit', event => {
+function createNote(content) {
+  const text = String(content || '').trim();
+  if (!text || text.length > 1500) return false;
+  const oldNotes = notes;
+  const oldNextNumber = nextNumber;
+  notes = [{ id: crypto.randomUUID?.() || String(Date.now()), number: nextNumber, text, createdAt: new Date().toISOString() }, ...notes];
+  selectedIndex = 0;
+  nextNumber += 1;
+  if (!persistState()) {
+    notes = oldNotes;
+    nextNumber = oldNextNumber;
+    return false;
+  }
+  render();
+  focusFrontCard();
+  status.textContent = 'Note ' + (nextNumber - 1) + ' saved.';
+  return true;
+}
+
+newButton.addEventListener('click', () => openEditor());
+noteText.addEventListener('input', saveDraft);
+noteText.addEventListener('change', saveDraft);
+editor.addEventListener('cancel', event => {
   event.preventDefault();
-  if (saveNote(noteText.value)) closeEditor();
+  if (!deleteConfirm.hidden) {
+    deleteConfirm.hidden = true;
+    deleteButton.focus();
+  } else {
+    finishEditor();
+  }
+});
+window.addEventListener('popstate', () => {
+  if (editor.open) finishEditor(true);
 });
 
 deleteButton.addEventListener('click', () => {
-  editorFields.hidden = true;
+  deleteButton.hidden = true;
   deleteConfirm.hidden = false;
   document.getElementById('cancel-delete').focus();
 });
 document.getElementById('cancel-delete').addEventListener('click', () => {
-  editorFields.hidden = false;
   deleteConfirm.hidden = true;
+  deleteButton.hidden = false;
   deleteButton.focus();
 });
 document.getElementById('confirm-delete').addEventListener('click', () => {
   const oldNotes = notes;
   notes = notes.filter(note => note.id !== editingId);
-  if (!persistNotes()) { notes = oldNotes; return; }
+  if (!persistState()) { notes = oldNotes; return; }
   selectedIndex = Math.min(selectedIndex, Math.max(0, notes.length - 1));
-  render();
+  noteText.value = '';
+  editingId = null;
   status.textContent = 'Card deleted.';
-  closeEditor();
+  finishEditor();
 });
 
 document.addEventListener('keydown', event => {
@@ -263,9 +332,7 @@ deck.addEventListener('pointerup', event => {
   const dx = event.clientX - pointerStart.x;
   const dy = event.clientY - pointerStart.y;
   pointerStart = null;
-  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) {
-    selectCard(selectedIndex + (dx < 0 ? 1 : -1));
-  }
+  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) selectCard(selectedIndex + (dx < 0 ? 1 : -1));
 });
 deck.addEventListener('pointercancel', () => { pointerStart = null; });
 
@@ -274,7 +341,7 @@ function registerVoiceTool() {
   if (!context?.registerTool) return;
   Promise.resolve(context.registerTool({
     name: 'make_note',
-    description: 'Create a note card in Note Deck from the user’s spoken words. If no note content is provided, open the note editor so the user can dictate it.',
+    description: 'Create a numbered note card in Note Deck from the user’s spoken words. Without content, open the note editor.',
     inputSchema: {
       type: 'object',
       properties: { content: { type: 'string', description: 'The words to save on the card.' } },
@@ -282,14 +349,15 @@ function registerVoiceTool() {
     },
     execute: ({ content } = {}) => {
       if (typeof content === 'string' && content.trim()) {
-        const created = saveNote(content);
-        return created ? 'Saved the note to Note Deck.' : 'The note could not be saved.';
+        return createNote(content) ? 'Saved the note to Note Deck.' : 'The note could not be saved.';
       }
       if (!editor.open) openEditor();
-      return 'The new note editor is open. Ask the user to select the text field and dictate the note.';
+      return 'The note editor is open. The text field is focused; select it to start dictation.';
     }
-  })).catch(() => { /* WebMCP is still in preview; the New note control remains available. */ });
+  })).catch(() => { /* WebMCP is optional; New note remains available. */ });
 }
 
+if (initialState.migrated) persistState();
 render();
+requestAnimationFrame(focusFrontCard);
 registerVoiceTool();

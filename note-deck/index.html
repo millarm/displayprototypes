@@ -13,50 +13,33 @@
   </head>
   <body>
     <main class="app-shell">
-      <header class="top-bar">
-        <div class="brand"><span class="brand-mark" aria-hidden="true">▰</span> Note Deck</div>
-        <p class="count" id="card-count" aria-live="polite"></p>
-      </header>
-
-      <section class="deck-section" aria-label="Notes">
-        <div class="deck" id="deck" aria-live="polite"></div>
-      </section>
-
-      <footer class="bottom-bar">
-        <div class="navigation" aria-label="Card navigation">
-          <button class="nav-button" id="previous-card" type="button" aria-label="Previous card">←</button>
-          <span id="position-label" class="position-label"></span>
-          <button class="nav-button" id="next-card" type="button" aria-label="Next card">→</button>
+      <section class="deck-view" aria-label="Note cards">
+        <div class="deck" id="deck"></div>
+        <div class="action-row">
+          <button class="action-button" id="new-note" type="button">＋ New note</button>
         </div>
-        <button class="new-button" id="new-note" type="button"><span aria-hidden="true">＋</span> New note</button>
-      </footer>
+      </section>
       <p id="status" class="sr-only" role="status"></p>
     </main>
 
-    <dialog id="note-editor" class="editor">
-      <form id="note-form">
-        <div id="editor-fields">
-          <div class="editor-heading">
-            <h1 id="editor-title">New note</h1>
-            <button class="icon-button" id="close-editor" type="button" aria-label="Close editor">×</button>
-          </div>
-          <label for="note-text">Note</label>
-          <textarea id="note-text" name="note" maxlength="1500" placeholder="Select here to dictate or write a note" required></textarea>
-          <p class="editor-help">On your glasses, select the text field to dictate.</p>
-          <div class="editor-actions">
-            <button class="secondary-button" id="delete-note" type="button" hidden>Delete</button>
-            <button class="save-button" type="submit">Save card</button>
-          </div>
+    <dialog id="note-editor" class="editor" aria-label="Edit note">
+      <div class="editor-card">
+        <div class="card-topline">
+          <span class="card-index" id="editor-number"></span>
+          <span class="card-kind">Note</span>
         </div>
-        <div id="delete-confirm" hidden>
-          <h1>Delete this card?</h1>
-          <p>This removes the note from this device.</p>
-          <div class="editor-actions">
-            <button class="secondary-button" id="cancel-delete" type="button">Keep card</button>
-            <button class="danger-button" id="confirm-delete" type="button">Delete card</button>
-          </div>
+        <div class="card-rule"></div>
+        <label class="sr-only" for="note-text">Note text</label>
+        <textarea id="note-text" name="note" maxlength="1500" autofocus aria-label="Note text"></textarea>
+      </div>
+      <div class="action-row editor-action-row">
+        <button class="delete-button" id="delete-note" type="button" hidden>Delete card</button>
+        <div class="delete-confirm" id="delete-confirm" hidden>
+          <span>Delete this card?</span>
+          <button class="secondary-button" id="cancel-delete" type="button">Keep</button>
+          <button class="danger-button" id="confirm-delete" type="button">Delete</button>
         </div>
-      </form>
+      </div>
     </dialog>
   </body>
 </html>

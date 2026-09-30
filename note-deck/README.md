@@ -5,10 +5,12 @@ A card-shaped note list for Meta Ray-Ban Display glasses. The centre card is upr
 ## Use
 
 - Use left/right on the glasses, keyboard, or a horizontal pointer drag to move through cards.
-- Select the front card to edit it, or select **New note** to create one. Select the text field to use the glasses' dictation composer.
+- Pinch to select the front card and edit or append to its text. Select the centred **New note** button to create one.
+- The note field receives focus immediately. Select it to open the glasses' dictation composer; web apps cannot open that composer with programmatic focus alone.
+- Changes save automatically as text is entered. Use the glasses' Back gesture to return to the deck. **Delete card** sits below an open card and asks for confirmation.
 - If the glasses' WebMCP preview is available while this app is open, Meta AI can call the `make_note` action. Outside the open app, generic “Hey Meta, make a note” invocation is not provided by this web app.
 
-Notes are stored in browser local storage on the device where they are created. They do not sync between devices. The three example cards are shown only when the deck has no saved notes.
+Notes are stored in browser local storage on the device where they are created. They do not sync between devices. Each note keeps its creation number, including after deletions. Existing notes from the first version are numbered from oldest to newest when the updated app first opens.
 
 ## Local preview
 
