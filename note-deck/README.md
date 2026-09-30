@@ -5,7 +5,7 @@ A card-shaped note list for Meta Ray-Ban Display glasses. The centre card is upr
 ## Use
 
 - With or without the Neural Band, swipe on the glasses' temple to move left/right between cards. Adjacent cards are focusable so the glasses' directional navigation can select them. A desktop keyboard's left/right arrows and a horizontal pointer drag also work.
-- Swipe up/down to scroll a long card. At the bottom, down moves to the centred **New note** button; up returns to the card. A hidden page scroll range behind the stationary deck and editor lets the glasses deliver vertical touchpad movement as arrow, wheel, or scroll events.
+- Swipe up/down to scroll a long card. At the bottom, down moves to the centred **New note** button; up returns to the card. A clipped scroll range behind the stationary deck and editor lets the glasses deliver vertical touchpad movement as arrow, wheel, or scroll events without a visible scrollbar.
 - Tap the temple or pinch to open the front card for editing. Use the glasses' two-finger Back gesture or the band's Back gesture to return to the deck.
 - The note field receives focus immediately. Select it to open the glasses' dictation composer; web apps cannot open that composer with programmatic focus alone.
 - On an existing note in the editor, down moves from the text field to **Delete card** once the text is scrolled to the end; up returns to the text field. A new unsaved note has no Delete action to move to.

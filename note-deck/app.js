@@ -10,7 +10,8 @@ const emptyCard = {
 };
 
 const deck = document.getElementById('deck');
-const appShell = document.querySelector('.app-shell');
+const deckView = document.querySelector('.deck-view');
+const scrollSurface = document.getElementById('scroll-surface');
 const status = document.getElementById('status');
 const newButton = document.getElementById('new-note');
 const editor = document.getElementById('note-editor');
@@ -266,7 +267,7 @@ function openEditor(id = null) {
   deleteButton.hidden = !note;
   deleteConfirm.hidden = true;
   editor.show();
-  appShell.inert = true;
+  deckView.inert = true;
   history.pushState({ noteDeckEditor: true }, '');
   editorHistoryActive = true;
   noteText.focus({ preventScroll: true });
@@ -309,7 +310,7 @@ function saveDraft() {
 function finishEditor(fromHistory = false) {
   if (!editor.open || !saveDraft()) return;
   editor.close();
-  appShell.inert = false;
+  deckView.inert = false;
   editingId = null;
   deleteConfirm.hidden = true;
   render();
@@ -473,8 +474,8 @@ function handleScroll(event) {
   if (seenScrollEvents.has(event)) return;
   seenScrollEvents.add(event);
   inputCounts.scrolls += 1;
-  const surface = document.scrollingElement;
-  const fromSurface = event.target === document || event.target === window || event.target === surface;
+  const surface = scrollSurface;
+  const fromSurface = event.target === surface;
   reportInput(`scroll ${fromSurface ? 'surface' : event.target?.id || 'inner'} ${Math.round(surface.scrollTop - SCROLL_MIDPOINT)}`);
   if (!fromSurface) return;
   const offset = surface.scrollTop - SCROLL_MIDPOINT;
@@ -530,7 +531,7 @@ function registerVoiceTool() {
 if (initialState.migrated) persistState();
 render();
 requestAnimationFrame(() => {
-  document.scrollingElement.scrollTop = SCROLL_MIDPOINT;
+  scrollSurface.scrollTop = SCROLL_MIDPOINT;
   focusFrontCard();
 });
 registerVoiceTool();

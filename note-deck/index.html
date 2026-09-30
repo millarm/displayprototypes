@@ -11,41 +11,45 @@
     <link rel="icon" href="./icon-96.png" type="image/png" sizes="96x96" />
     <link rel="apple-touch-icon" href="./icon-180.png" sizes="180x180" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=20260930-vertical7" />
-    <script src="./app.js?v=20260930-vertical7" defer></script>
+    <link rel="stylesheet" href="./styles.css?v=20260930-vertical8" />
+    <script src="./app.js?v=20260930-vertical8" defer></script>
   </head>
   <body>
-    <main class="app-shell">
-      <section class="deck-view" aria-label="Note cards">
-        <div class="deck" id="deck"></div>
-        <div class="new-note-actions">
-          <button class="action-button" id="new-note" type="button">＋ New note</button>
-          <p class="input-hint">To dictate, select the text field</p>
-        </div>
-      </section>
-      <p id="status" class="sr-only" role="status"></p>
-    </main>
-
-    <dialog id="note-editor" class="editor" aria-label="Edit note">
-      <div class="editor-stage">
-        <div class="editor-card">
-          <div class="card-topline">
-            <span class="card-index" id="editor-number"></span>
-            <span class="card-date" id="editor-date"></span>
-          </div>
-          <div class="card-rule"></div>
-          <label class="sr-only" for="note-text">Note text</label>
-          <textarea id="note-text" name="note" maxlength="1500" autofocus aria-label="Note text"></textarea>
-        </div>
-        <div class="action-row editor-action-row">
-          <button class="delete-button" id="delete-note" type="button" hidden>Delete card</button>
-          <div class="delete-confirm" id="delete-confirm" hidden>
-            <span>Delete this card?</span>
-            <button class="secondary-button" id="cancel-delete" type="button">Keep</button>
-            <button class="danger-button" id="confirm-delete" type="button">Delete</button>
-          </div>
-        </div>
+    <div class="scroll-window">
+      <div id="scroll-surface" class="scroll-surface">
+        <main class="app-shell">
+          <section class="deck-view" aria-label="Note cards">
+            <div class="deck" id="deck"></div>
+            <div class="new-note-actions">
+              <button class="action-button" id="new-note" type="button">＋ New note</button>
+              <p class="input-hint">To dictate, select the text field</p>
+            </div>
+          </section>
+          <p id="status" class="sr-only" role="status"></p>
+          <dialog id="note-editor" class="editor" aria-label="Edit note">
+            <div class="editor-stage">
+              <div class="editor-card">
+                <div class="card-topline">
+                  <span class="card-index" id="editor-number"></span>
+                  <span class="card-date" id="editor-date"></span>
+                </div>
+                <div class="card-rule"></div>
+                <label class="sr-only" for="note-text">Note text</label>
+                <textarea id="note-text" name="note" maxlength="1500" autofocus aria-label="Note text"></textarea>
+              </div>
+              <div class="action-row editor-action-row">
+                <button class="delete-button" id="delete-note" type="button" hidden>Delete card</button>
+                <div class="delete-confirm" id="delete-confirm" hidden>
+                  <span>Delete this card?</span>
+                  <button class="secondary-button" id="cancel-delete" type="button">Keep</button>
+                  <button class="danger-button" id="confirm-delete" type="button">Delete</button>
+                </div>
+              </div>
+            </div>
+          </dialog>
+        </main>
+        <div class="scroll-space" aria-hidden="true"></div>
       </div>
-    </dialog>
+    </div>
   </body>
 </html>
