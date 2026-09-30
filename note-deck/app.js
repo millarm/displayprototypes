@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'note-deck.state.v2';
 const LEGACY_STORAGE_KEY = 'note-deck.notes.v1';
+const SCROLL_MIDPOINT = 120;
 const emptyCard = {
   id: 'empty-card',
   text: 'No notes yet\n\nCreate your first note below.',
@@ -18,12 +19,15 @@ const noteText = document.getElementById('note-text');
 const deleteButton = document.getElementById('delete-note');
 const deleteConfirm = document.getElementById('delete-confirm');
 const inputDebug = new URLSearchParams(location.search).has('input-debug') ? document.createElement('output') : null;
+const editorInputDebug = inputDebug ? document.createElement('output') : null;
 const inputCounts = { keys: 0, wheels: 0, scrolls: 0, focuses: 0 };
 let lastInputSignal = 'none';
 if (inputDebug) {
   inputDebug.id = 'input-debug';
   inputDebug.setAttribute('aria-live', 'polite');
   document.body.append(inputDebug);
+  editorInputDebug.id = 'editor-input-debug';
+  editor.append(editorInputDebug);
 }
 
 function reportInput(signal = lastInputSignal) {
@@ -33,7 +37,9 @@ function reportInput(signal = lastInputSignal) {
     : document.activeElement === noteText ? 'Text field'
     : document.activeElement === deleteButton ? 'Delete card'
     : document.activeElement?.classList.contains('note-card') ? 'Card' : 'Other';
-  inputDebug.textContent = `Last: ${lastInputSignal} | Keys: ${inputCounts.keys} | Wheels: ${inputCounts.wheels} | Scrolls: ${inputCounts.scrolls} | Foci: ${inputCounts.focuses} | Focus: ${focused}`;
+  const readout = `Last: ${lastInputSignal} | Keys: ${inputCounts.keys} | Wheels: ${inputCounts.wheels} | Scrolls: ${inputCounts.scrolls} | Foci: ${inputCounts.focuses} | Focus: ${focused}`;
+  inputDebug.textContent = readout;
+  editorInputDebug.textContent = readout;
 }
 reportInput('none');
 if (inputDebug) document.addEventListener('focusin', () => {
@@ -259,10 +265,14 @@ function openEditor(id = null) {
   deleteButton.hidden = !note;
   deleteConfirm.hidden = true;
   editor.showModal();
+  editor.scrollTop = SCROLL_MIDPOINT;
   history.pushState({ noteDeckEditor: true }, '');
   editorHistoryActive = true;
   noteText.focus({ preventScroll: true });
-  requestAnimationFrame(() => noteText.focus({ preventScroll: true }));
+  requestAnimationFrame(() => {
+    editor.scrollTop = SCROLL_MIDPOINT;
+    noteText.focus({ preventScroll: true });
+  });
 }
 
 function saveDraft() {
@@ -446,10 +456,26 @@ function wireNavigation(element) {
 wireNavigation(newButton);
 wireNavigation(noteText);
 wireNavigation(deleteButton);
-if (inputDebug) window.addEventListener('scroll', () => {
+const seenScrollEvents = new WeakSet();
+function handleScroll(event) {
+  if (seenScrollEvents.has(event)) return;
+  seenScrollEvents.add(event);
   inputCounts.scrolls += 1;
-  reportInput('scroll');
-}, true);
+  const surface = editor.open ? editor : document.scrollingElement;
+  const fromSurface = editor.open ? event.target === editor
+    : event.target === document || event.target === window || event.target === surface;
+  reportInput(`scroll ${fromSurface ? 'surface' : event.target?.id || 'inner'} ${Math.round(surface.scrollTop - SCROLL_MIDPOINT)}`);
+  if (!fromSurface) return;
+  const offset = surface.scrollTop - SCROLL_MIDPOINT;
+  if (Math.abs(offset) < 8) return;
+  surface.scrollTop = SCROLL_MIDPOINT;
+  const now = performance.now();
+  if (now - lastVerticalMoveAt < 350) return;
+  lastVerticalMoveAt = now;
+  moveVertically(Math.sign(offset));
+}
+window.addEventListener('scroll', handleScroll, true);
+editor.addEventListener('scroll', handleScroll, true);
 
 deck.addEventListener('pointerdown', event => { pointerStart = { x: event.clientX, y: event.clientY }; });
 deck.addEventListener('pointerup', event => {
@@ -493,5 +519,8 @@ function registerVoiceTool() {
 
 if (initialState.migrated) persistState();
 render();
-requestAnimationFrame(focusFrontCard);
+requestAnimationFrame(() => {
+  document.scrollingElement.scrollTop = SCROLL_MIDPOINT;
+  focusFrontCard();
+});
 registerVoiceTool();

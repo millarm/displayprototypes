@@ -7,18 +7,21 @@
 }
 
 * { box-sizing: border-box; }
-html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+html { width: 100%; height: 100%; margin: 0; overflow-x: hidden; overflow-y: auto; }
+body { width: 100%; min-height: calc(100vh + 240px); margin: 0; }
 button, textarea { font: inherit; }
 button { cursor: pointer; }
 
 .app-shell {
+  position: sticky;
+  top: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   overflow: hidden;
   background: #000;
 }
 
-.deck-view, .editor[open] {
+.deck-view, .editor-stage {
   width: 100%;
   height: 100%;
   display: flex;
@@ -133,6 +136,9 @@ button { cursor: pointer; }
   background: #000;
   color: #eef5ff;
 }
+.editor[open] { display: block; overflow-y: auto; }
+.editor-stage { position: sticky; top: 0; }
+.editor-scroll-space { height: 240px; }
 .editor::backdrop { background: #000; }
 .editor-card {
   flex: 0 0 auto;
@@ -161,7 +167,7 @@ button { cursor: pointer; }
 
 [hidden] { display: none !important; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-#input-debug { position: fixed; z-index: 100; bottom: 9px; left: 50%; transform: translateX(-50%); width: min(92vw, 560px); padding: 6px 9px; color: #eef5ff; background: #26364c; border: 1px solid #c6f46a; border-radius: 8px; text-align: center; font-size: 12px; pointer-events: none; }
+#input-debug, #editor-input-debug { position: fixed; z-index: 100; bottom: 9px; left: 50%; transform: translateX(-50%); width: min(92vw, 560px); padding: 6px 9px; color: #eef5ff; background: #26364c; border: 1px solid #c6f46a; border-radius: 8px; text-align: center; font-size: 12px; pointer-events: none; }
 
 @media (max-width: 430px) {
   .card-anchor, .editor-card { width: 65vw; height: min(58vh, 350px); }
