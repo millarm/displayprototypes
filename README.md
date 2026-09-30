@@ -5,3 +5,5 @@ Experiments for Meta Ray-Ban Display glasses. Each prototype lives in its own di
 | Prototype | Description |
 | --- | --- |
 | [note-deck](note-deck/) | A fanned card deck for quick notes, built as a static web app. |
+
+The repository root has a Replit preview command for Note Deck. Each app keeps its own source and deployment settings in its directory.
