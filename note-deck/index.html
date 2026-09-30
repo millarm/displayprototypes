@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="mrbd-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="A small deck of notes for Meta Ray-Ban Display glasses." />
+    <title>Note Deck</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='10' y='12' width='42' height='40' rx='8' fill='%23c6f46a' transform='rotate(8 31 32)'/%3E%3Crect x='8' y='10' width='42' height='40' rx='8' fill='%231b2432' stroke='%23e5eeff' stroke-width='3'/%3E%3Cpath d='M17 24h24M17 32h20' stroke='%23e5eeff' stroke-width='3'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="top-bar">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">▰</span> Note Deck</div>
+        <p class="count" id="card-count" aria-live="polite"></p>
+      </header>
+
+      <section class="deck-section" aria-label="Notes">
+        <div class="deck" id="deck" aria-live="polite"></div>
+      </section>
+
+      <footer class="bottom-bar">
+        <div class="navigation" aria-label="Card navigation">
+          <button class="nav-button" id="previous-card" type="button" aria-label="Previous card">←</button>
+          <span id="position-label" class="position-label"></span>
+          <button class="nav-button" id="next-card" type="button" aria-label="Next card">→</button>
+        </div>
+        <button class="new-button" id="new-note" type="button"><span aria-hidden="true">＋</span> New note</button>
+      </footer>
+      <p id="status" class="sr-only" role="status"></p>
+    </main>
+
+    <dialog id="note-editor" class="editor">
+      <form id="note-form">
+        <div id="editor-fields">
+          <div class="editor-heading">
+            <h1 id="editor-title">New note</h1>
+            <button class="icon-button" id="close-editor" type="button" aria-label="Close editor">×</button>
+          </div>
+          <label for="note-text">Note</label>
+          <textarea id="note-text" name="note" maxlength="1500" placeholder="Select here to dictate or write a note" required></textarea>
+          <p class="editor-help">On your glasses, select the text field to dictate.</p>
+          <div class="editor-actions">
+            <button class="secondary-button" id="delete-note" type="button" hidden>Delete</button>
+            <button class="save-button" type="submit">Save card</button>
+          </div>
+        </div>
+        <div id="delete-confirm" hidden>
+          <h1>Delete this card?</h1>
+          <p>This removes the note from this device.</p>
+          <div class="editor-actions">
+            <button class="secondary-button" id="cancel-delete" type="button">Keep card</button>
+            <button class="danger-button" id="confirm-delete" type="button">Delete card</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>
