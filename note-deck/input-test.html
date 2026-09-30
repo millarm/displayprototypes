@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="mrbd-web-app-capable" content="yes" />
+    <title>Display Input Test</title>
+    <style>
+      :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #000; color: #eef5ff; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 720px; }
+      main { width: min(100%, 600px); margin: auto; padding: 26px 28px; text-align: center; }
+      h1 { margin: 0 0 8px; font-size: 25px; }
+      p { margin: 0 0 13px; font-size: 16px; line-height: 1.3; }
+      .pad { position: relative; height: 250px; margin: 0 auto 14px; }
+      button { position: absolute; width: 105px; height: 67px; border-radius: 14px; border: 2px solid #8393a5; background: #1b293a; color: #eef5ff; font: 700 19px system-ui, sans-serif; }
+      button:focus { outline: 4px solid #c6f46a; outline-offset: 3px; border-color: #c6f46a; }
+      #up { top: 0; left: calc(50% - 52px); }
+      #left { top: 87px; left: calc(50% - 175px); }
+      #center { top: 87px; left: calc(50% - 52px); }
+      #right { top: 87px; left: calc(50% + 71px); }
+      #down { top: 174px; left: calc(50% - 52px); }
+      .readout { padding: 13px 16px; border: 1px solid #8294ad; border-radius: 15px; background: #15202e; text-align: left; }
+      .readout p { margin: 4px 0; }
+      strong { color: #c6f46a; }
+      #events { min-height: 48px; margin-top: 9px; color: #aebbd0; font-size: 13px; overflow-wrap: anywhere; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Glasses input test</h1>
+      <p>Without the band, swipe one finger on the right temple in each direction. Tap to select.</p>
+      <div class="pad" aria-label="Directional targets">
+        <button id="up" type="button">Up</button>
+        <button id="left" type="button">Left</button>
+        <button id="center" type="button" autofocus>Centre</button>
+        <button id="right" type="button">Right</button>
+        <button id="down" type="button">Down</button>
+      </div>
+      <div class="readout" aria-live="polite">
+        <p>Selected: <strong id="selected">Centre</strong></p>
+        <p>Last swipe signal: <strong id="signal">None yet</strong></p>
+        <p>Arrow keys: <strong id="keys">0</strong> · Scroll/wheel: <strong id="scrolls">0</strong></p>
+        <p>Taps: <strong id="taps">0</strong></p>
+        <div id="events" aria-label="Recent input events"></div>
+      </div>
+    </main>
+    <script>
+      const selected = document.getElementById('selected');
+      const signal = document.getElementById('signal');
+      const keys = document.getElementById('keys');
+      const scrolls = document.getElementById('scrolls');
+      const taps = document.getElementById('taps');
+      const events = document.getElementById('events');
+      let keyCount = 0;
+      let scrollCount = 0;
+      let tapCount = 0;
+      let touchStart = null;
+      const recent = [];
+
+      function record(message, directional = false) {
+        if (directional) signal.textContent = message;
+        recent.unshift(message);
+        recent.length = Math.min(recent.length, 3);
+        events.textContent = recent.join(' · ');
+      }
+      document.addEventListener('focusin', event => {
+        if (event.target instanceof HTMLButtonElement) {
+          selected.textContent = event.target.textContent;
+          record('focus ' + event.target.textContent);
+        }
+      });
+      document.addEventListener('keydown', event => {
+        if (event.key.startsWith('Arrow')) {
+          keys.textContent = String(++keyCount);
+          record('key ' + event.key, true);
+        } else if (event.key === 'Enter') {
+          record('key Enter');
+        }
+      }, true);
+      document.addEventListener('wheel', event => {
+        scrolls.textContent = String(++scrollCount);
+        record('wheel ' + Math.round(event.deltaX) + ',' + Math.round(event.deltaY), true);
+      }, { passive: true, capture: true });
+      window.addEventListener('scroll', () => {
+        scrolls.textContent = String(++scrollCount);
+        record('page scroll ' + Math.round(window.scrollY), true);
+      }, { passive: true });
+      document.addEventListener('pointerdown', event => {
+        touchStart = { x: event.clientX, y: event.clientY };
+      }, true);
+      document.addEventListener('pointerup', event => {
+        if (!touchStart) return;
+        const dx = Math.round(event.clientX - touchStart.x);
+        const dy = Math.round(event.clientY - touchStart.y);
+        if (Math.abs(dx) + Math.abs(dy) > 20) record('pointer ' + dx + ',' + dy, true);
+        touchStart = null;
+      }, true);
+      document.querySelectorAll('button').forEach(button => {
+        button.addEventListener('click', () => {
+          taps.textContent = String(++tapCount);
+          record('tap ' + button.textContent);
+        });
+      });
+      document.getElementById('center').focus({ preventScroll: true });
+    </script>
+  </body>
+</html>
