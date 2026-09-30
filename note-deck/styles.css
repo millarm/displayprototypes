@@ -63,6 +63,7 @@ button:focus-visible, textarea:focus-visible {
   z-index: var(--layer);
   pointer-events: none;
 }
+.card-anchor[data-visible="false"] .note-card { pointer-events: none; }
 
 .note-card {
   display: flex;
@@ -80,7 +81,7 @@ button:focus-visible, textarea:focus-visible {
   overflow: hidden;
   pointer-events: auto;
   transform: scale(var(--scale));
-  transition: transform 340ms cubic-bezier(.2,.85,.2,1), border-color 260ms ease;
+  transition: transform 340ms cubic-bezier(.2,.85,.2,1), border-color 260ms ease, box-shadow 260ms ease;
 }
 
 .card-anchor[data-current="true"] .note-card {
@@ -90,7 +91,8 @@ button:focus-visible, textarea:focus-visible {
 
 .card-anchor[data-current="false"] .note-card { color: #cbd6e5; }
 .card-anchor[data-current="false"] .card-body,
-.card-anchor[data-current="false"] .card-date { visibility: hidden; }
+.card-anchor[data-current="false"] .card-date { opacity: 0; }
+.card-body, .card-date { transition: opacity 220ms ease; }
 
 .card-topline { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
 .card-index { font-size: clamp(13px, 2.4vw, 16px); color: #c6f46a; font-weight: 700; letter-spacing: .06em; }
@@ -146,5 +148,5 @@ button:focus-visible, textarea:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card-anchor, .note-card { transition: none; }
+  .card-anchor, .note-card, .card-body, .card-date { transition: none; }
 }

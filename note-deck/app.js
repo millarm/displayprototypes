@@ -25,6 +25,8 @@ let notes = readNotes();
 let selectedIndex = 0;
 let editingId = null;
 let pointerStart = null;
+const renderedCards = new Map();
+let renderVersion = 0;
 
 function readNotes() {
   try {
@@ -71,27 +73,34 @@ function createTextElement(tag, className, value) {
   return element;
 }
 
-function render() {
-  const items = shownNotes();
-  selectedIndex = Math.max(0, Math.min(selectedIndex, items.length - 1));
-  deck.replaceChildren();
+function createCard(note) {
+  const anchor = document.createElement('div');
+  anchor.className = 'card-anchor';
+  const card = document.createElement('button');
+  card.className = 'note-card';
+  card.type = 'button';
+  anchor.append(card);
+  deck.append(anchor);
+  return { anchor, card, contentKey: null };
+}
 
-  items.forEach((note, index) => {
-    const offset = index - selectedIndex;
-    if (Math.abs(offset) > 2) return;
-
-    const anchor = document.createElement('div');
-    anchor.className = 'card-anchor';
-    anchor.dataset.current = String(offset === 0);
-    anchor.style.setProperty('--angle', `${offset * 15}deg`);
-    anchor.style.setProperty('--layer', String(10 - Math.abs(offset)));
-    anchor.style.setProperty('--opacity', String(1 - Math.abs(offset) * .13));
-    anchor.style.setProperty('--scale', String(1 - Math.abs(offset) * .07));
-
-    const card = document.createElement('button');
-    card.className = 'note-card';
-    card.type = 'button';
-    card.setAttribute('aria-label', `${offset === 0 ? (note.sample ? 'Create a note from example' : 'Edit') : 'Show'} card ${index + 1}: ${titleFor(note.text)}`);
+function updateCard(entry, note, index, offset) {
+  const { anchor, card } = entry;
+  const position = Math.max(-3, Math.min(3, offset));
+  const visible = Math.abs(offset) <= 2;
+  anchor.dataset.current = String(offset === 0);
+  anchor.dataset.visible = String(visible);
+  anchor.setAttribute('aria-hidden', String(!visible));
+  anchor.style.setProperty('--angle', `${position * 15}deg`);
+  anchor.style.setProperty('--layer', String(10 - Math.abs(position)));
+  anchor.style.setProperty('--opacity', visible ? String(1 - Math.abs(position) * .13) : '0');
+  anchor.style.setProperty('--scale', String(1 - Math.abs(position) * .07));
+  card.tabIndex = visible ? 0 : -1;
+  card.setAttribute('aria-label', `${offset === 0 ? (note.sample ? 'Create a note from example' : 'Edit') : 'Show'} card ${index + 1}: ${titleFor(note.text)}`);
+  const contentKey = `${note.text}\n${note.createdAt}`;
+  if (entry.contentKey !== contentKey) {
+    entry.contentKey = contentKey;
+    card.replaceChildren();
     card.append(createTextElement('div', 'card-topline', ''));
     card.firstChild.append(
       createTextElement('span', 'card-index', String(index + 1).padStart(2, '0')),
@@ -103,13 +112,58 @@ function render() {
       createTextElement('p', 'card-body', bodyFor(note.text)),
       createTextElement('div', 'card-date', formatDate(note.createdAt))
     );
-    card.addEventListener('click', () => {
-      if (offset !== 0) { selectCard(index); return; }
-      openEditor(note.sample ? null : note.id);
-    });
-    anchor.append(card);
-    deck.append(anchor);
+  }
+  card.onclick = () => {
+    const currentIndex = shownNotes().findIndex(item => item.id === note.id);
+    if (currentIndex < 0) return;
+    if (currentIndex !== selectedIndex) { selectCard(currentIndex); return; }
+    openEditor(note.sample ? null : note.id);
+  };
+}
+
+function render(previousIndex = selectedIndex) {
+  const items = shownNotes();
+  selectedIndex = Math.max(0, Math.min(selectedIndex, items.length - 1));
+  const version = ++renderVersion;
+  const needed = new Set();
+
+  items.forEach((note, index) => {
+    const offset = index - selectedIndex;
+    if (Math.abs(offset) > 3) return;
+    needed.add(note.id);
+    let entry = renderedCards.get(note.id);
+    if (!entry) {
+      entry = createCard(note);
+      renderedCards.set(note.id, entry);
+      const initialOffset = index - previousIndex;
+      updateCard(entry, note, index, Math.abs(initialOffset) > 2 ? initialOffset : offset);
+      if (initialOffset !== offset) {
+        entry.anchor.getBoundingClientRect();
+        requestAnimationFrame(() => {
+          if (version === renderVersion && renderedCards.get(note.id) === entry) updateCard(entry, note, index, offset);
+        });
+      }
+    } else {
+      updateCard(entry, note, index, offset);
+    }
   });
+
+  for (const [id, entry] of renderedCards) {
+    if (needed.has(id)) continue;
+    const oldOffset = Number(entry.anchor.style.getPropertyValue('--angle').replace('deg', '')) / 15;
+    const exitOffset = oldOffset < 0 ? -3 : 3;
+    const oldNote = items.find(note => note.id === id);
+    if (oldNote) updateCard(entry, oldNote, items.indexOf(oldNote), exitOffset);
+    else entry.anchor.style.setProperty('--opacity', '0');
+    setTimeout(() => {
+      const currentItems = shownNotes();
+      const currentIndex = currentItems.findIndex(note => note.id === id);
+      if (renderedCards.get(id) === entry && (currentIndex < 0 || Math.abs(currentIndex - selectedIndex) > 3)) {
+        entry.anchor.remove();
+        renderedCards.delete(id);
+      }
+    }, 400);
+  }
 
   count.textContent = notes.length ? `${notes.length} ${notes.length === 1 ? 'card' : 'cards'}` : 'Your deck';
   positionLabel.textContent = `${selectedIndex + 1} / ${items.length}`;
@@ -120,8 +174,9 @@ function render() {
 function selectCard(index) {
   const items = shownNotes();
   if (index < 0 || index >= items.length) return;
+  const previousIndex = selectedIndex;
   selectedIndex = index;
-  render();
+  render(previousIndex);
   status.textContent = `Card ${index + 1} of ${items.length}: ${titleFor(items[index].text)}`;
 }
 
