@@ -18,7 +18,7 @@ const noteText = document.getElementById('note-text');
 const deleteButton = document.getElementById('delete-note');
 const deleteConfirm = document.getElementById('delete-confirm');
 const inputDebug = new URLSearchParams(location.search).has('input-debug') ? document.createElement('output') : null;
-const inputCounts = { keys: 0, wheels: 0, scrolls: 0 };
+const inputCounts = { keys: 0, wheels: 0, scrolls: 0, focuses: 0 };
 let lastInputSignal = 'none';
 if (inputDebug) {
   inputDebug.id = 'input-debug';
@@ -29,16 +29,17 @@ if (inputDebug) {
 function reportInput(signal = lastInputSignal) {
   if (!inputDebug) return;
   lastInputSignal = signal;
-  requestAnimationFrame(() => {
-    const focused = document.activeElement === newButton ? 'New note'
-      : document.activeElement === noteText ? 'Text field'
-      : document.activeElement === deleteButton ? 'Delete card'
-      : document.activeElement?.classList.contains('note-card') ? 'Card' : 'Other';
-    inputDebug.textContent = `Last: ${lastInputSignal} | Keys: ${inputCounts.keys} | Wheels: ${inputCounts.wheels} | Scrolls: ${inputCounts.scrolls} | Focus: ${focused}`;
-  });
+  const focused = document.activeElement === newButton ? 'New note'
+    : document.activeElement === noteText ? 'Text field'
+    : document.activeElement === deleteButton ? 'Delete card'
+    : document.activeElement?.classList.contains('note-card') ? 'Card' : 'Other';
+  inputDebug.textContent = `Last: ${lastInputSignal} | Keys: ${inputCounts.keys} | Wheels: ${inputCounts.wheels} | Scrolls: ${inputCounts.scrolls} | Foci: ${inputCounts.focuses} | Focus: ${focused}`;
 }
 reportInput('none');
-if (inputDebug) document.addEventListener('focusin', () => reportInput());
+if (inputDebug) document.addEventListener('focusin', () => {
+  inputCounts.focuses += 1;
+  reportInput();
+});
 
 function validNote(note) {
   return note && typeof note.id === 'string' && typeof note.text === 'string' && typeof note.createdAt === 'string';
@@ -395,7 +396,10 @@ function moveVertically(direction) {
   }
 }
 
-window.addEventListener('keydown', event => {
+const seenKeyEvents = new WeakSet();
+function handleDirectionalKey(event) {
+  if (seenKeyEvents.has(event)) return;
+  seenKeyEvents.add(event);
   if (event.altKey || event.ctrlKey || event.metaKey) return;
   if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
   inputCounts.keys += 1;
@@ -415,9 +419,14 @@ window.addEventListener('keydown', event => {
 
   lastVerticalMoveAt = performance.now();
   moveVertically(event.key === 'ArrowDown' ? 1 : -1);
-}, true);
+}
+window.addEventListener('keydown', handleDirectionalKey, true);
+document.addEventListener('keydown', handleDirectionalKey, true);
 
-window.addEventListener('wheel', event => {
+const seenWheelEvents = new WeakSet();
+function handleWheel(event) {
+  if (seenWheelEvents.has(event)) return;
+  seenWheelEvents.add(event);
   inputCounts.wheels += 1;
   reportInput(`wheel ${Math.round(event.deltaX)},${Math.round(event.deltaY)}`);
   if (Math.abs(event.deltaY) <= Math.abs(event.deltaX) || !event.deltaY) return;
@@ -426,7 +435,9 @@ window.addEventListener('wheel', event => {
   if (now - lastVerticalMoveAt < 350) return;
   lastVerticalMoveAt = now;
   moveVertically(Math.sign(event.deltaY));
-}, { capture: true, passive: false });
+}
+window.addEventListener('wheel', handleWheel, { capture: true, passive: false });
+document.addEventListener('wheel', handleWheel, { capture: true, passive: false });
 if (inputDebug) window.addEventListener('scroll', () => {
   inputCounts.scrolls += 1;
   reportInput('scroll');
