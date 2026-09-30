@@ -4,9 +4,9 @@ A card-shaped note list for Meta Ray-Ban Display glasses. The centre card is upr
 
 ## Use
 
-- Use left/right on the glasses, keyboard, or a horizontal pointer drag to move through cards.
-- Scroll long cards up/down while they are in the deck; their full text is available without opening the editor.
-- Pinch to select the front card and edit or append to its text. Select the centred **New note** button to create one.
+- With or without the Neural Band, swipe on the glasses' temple to move left/right between cards. Adjacent cards are focusable so the glasses' directional navigation can select them. A desktop keyboard's left/right arrows and a horizontal pointer drag also work.
+- Swipe up/down to scroll a long card. At the bottom, down moves to the centred **New note** button; up returns to the card.
+- Tap the temple or pinch to open the front card for editing. Use the glasses' two-finger Back gesture or the band's Back gesture to return to the deck.
 - The note field receives focus immediately. Select it to open the glasses' dictation composer; web apps cannot open that composer with programmatic focus alone.
 - Changes save automatically as text is entered. Use the glasses' Back gesture to return to the deck. **Delete card** sits below an open card and asks for confirmation.
 - The deck no longer shows a “Hey Meta” prompt because Meta AI has not routed either tested phrase to this app on the glasses: “make a note” started Meta's audio-note recorder, and “add a card to Note Deck” returned that it could not create decks or cards. Use **New note**, then select the text field for the glasses' dictation composer. The experimental `add_card_to_note_deck` WebMCP action remains registered for devices where Meta enables it, but should not be presented as a working voice shortcut until it passes an on-device test.

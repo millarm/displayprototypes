@@ -113,14 +113,15 @@ function updateCard(entry, note, index, offset) {
   const { anchor, card } = entry;
   const position = Math.max(-3, Math.min(3, offset));
   const visible = Math.abs(offset) <= 2;
+  const selectable = Math.abs(offset) <= 1;
   anchor.dataset.current = String(offset === 0);
   anchor.dataset.visible = String(visible);
-  anchor.setAttribute('aria-hidden', String(offset !== 0));
+  anchor.setAttribute('aria-hidden', String(!selectable));
   anchor.style.setProperty('--angle', position * 15 + 'deg');
   anchor.style.setProperty('--layer', String(10 - Math.abs(position)));
   anchor.style.setProperty('--opacity', visible ? String(1 - Math.abs(position) * .13) : '0');
   anchor.style.setProperty('--scale', String(1 - Math.abs(position) * .07));
-  card.tabIndex = offset === 0 ? 0 : -1;
+  card.tabIndex = selectable ? 0 : -1;
   card.setAttribute('aria-label', note.sample ? 'Create your first note' : 'Open note ' + note.number + ': ' + titleFor(note.text));
 
   const contentKey = note.number + '\n' + note.text + '\n' + note.createdAt;
@@ -150,6 +151,10 @@ function updateCard(entry, note, index, offset) {
     if (currentIndex < 0) return;
     if (currentIndex !== selectedIndex) { selectCard(currentIndex); return; }
     openEditor(note.sample ? null : note.id);
+  };
+  card.onfocus = () => {
+    const focusedIndex = shownNotes().findIndex(item => item.id === note.id);
+    if (focusedIndex >= 0 && focusedIndex !== selectedIndex) selectCard(focusedIndex);
   };
 }
 
@@ -333,20 +338,37 @@ document.getElementById('confirm-delete').addEventListener('click', () => {
 
 document.addEventListener('keydown', event => {
   if (editor.open || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (document.activeElement === newButton && event.key === 'ArrowUp') {
+    event.preventDefault();
+    focusFrontCard();
+    return;
+  }
+  const current = shownNotes()[selectedIndex];
+  const card = renderedCards.get(current.id)?.card;
+  if (document.activeElement !== card) return;
   if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-    const current = shownNotes()[selectedIndex];
-    const card = renderedCards.get(current.id)?.card;
     const content = card?.querySelector('.card-content');
     const direction = event.key === 'ArrowDown' ? 1 : -1;
-    if (document.activeElement === card && content &&
+    if (content &&
         (direction > 0 ? content.scrollTop + content.clientHeight < content.scrollHeight - 1 : content.scrollTop > 1)) {
       event.preventDefault();
       content.scrollTop += direction * 90;
       return;
     }
+    if (direction > 0) {
+      event.preventDefault();
+      newButton.focus({ preventScroll: true });
+      return;
+    }
   }
-  if (event.key === 'ArrowLeft') { event.preventDefault(); selectCard(selectedIndex - 1); }
-  if (event.key === 'ArrowRight') { event.preventDefault(); selectCard(selectedIndex + 1); }
+  if (event.key === 'ArrowLeft' && selectedIndex > 0) {
+    event.preventDefault();
+    selectCard(selectedIndex - 1);
+  }
+  if (event.key === 'ArrowRight' && selectedIndex < shownNotes().length - 1) {
+    event.preventDefault();
+    selectCard(selectedIndex + 1);
+  }
 });
 
 deck.addEventListener('pointerdown', event => { pointerStart = { x: event.clientX, y: event.clientY }; });
@@ -360,7 +382,11 @@ deck.addEventListener('pointerup', event => {
     setTimeout(() => { suppressCardClick = false; }, 100);
     return;
   }
-  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) selectCard(selectedIndex + (dx < 0 ? 1 : -1));
+  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+    suppressCardClick = true;
+    setTimeout(() => { suppressCardClick = false; }, 100);
+    selectCard(selectedIndex + (dx < 0 ? 1 : -1));
+  }
 });
 deck.addEventListener('pointercancel', () => { pointerStart = null; });
 
