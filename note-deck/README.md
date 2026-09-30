@@ -11,7 +11,7 @@ A card-shaped note list for Meta Ray-Ban Display glasses. The centre card is upr
 - Changes save automatically as text is entered. Use the glasses' Back gesture to return to the deck. **Delete card** sits below an open card and asks for confirmation.
 - With the app open and the glasses' WebMCP preview available, try “Hey Meta, make a note: [your words].” Meta AI can call the app's `make_note` action. Outside the open app, generic voice invocation is not provided by this web app.
 
-The card's creation date appears beside its number. The hosted `icon.svg` is the web app favicon and a source asset for a future 80 × 80 px catalogue thumbnail. Meta's current public instructions for connecting a web app do not document a separate launcher icon upload.
+The card's creation date appears beside its number. The hosted `icon.svg` is the browser favicon. The glasses' app grid uses `.well-known/meta-wearables-manifest.json` and its transparent monochrome `launcher-icon.svg`, tinted by the manifest's theme color. The icon shown in the app grid may refresh when the glasses reconnect or the app is re-added.
 
 Notes are stored in browser local storage on the device where they are created. They do not sync between devices. Each note keeps its creation number, including after deletions. Existing notes from the first version are numbered from oldest to newest when the updated app first opens.
 

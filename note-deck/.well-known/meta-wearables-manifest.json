@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "name": "Note Deck",
+  "description": "A hand-fanned deck of quick notes for Meta Ray-Ban Display glasses.",
+  "appearance": {
+    "theme_color": "#C6F46A",
+    "icon": {
+      "src": "../launcher-icon.svg",
+      "type": "monochrome"
+    }
+  }
+}
