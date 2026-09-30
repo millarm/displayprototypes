@@ -16,4 +16,4 @@ Run `python3 -m http.server 8000` in this directory and open `http://localhost:8
 
 ## Replit hosting
 
-Import these files into a Replit project, then choose a **Static** deployment. Set its public directory to the project root (`/`); no build command is needed. Publish to a public HTTPS `*.replit.app` URL, then add that URL in the Meta AI app under Display Glasses settings → App connections → Web apps → Add a web app.
+The `displayprototypes` repository is imported into Replit. Its **Static pages** deployment serves `note-deck` as the public directory, with no build command. The live URL is [displayprototypes.replit.app](https://displayprototypes.replit.app/). Add that URL in the Meta AI app under Display Glasses settings → App connections → Web apps → Add a web app.
