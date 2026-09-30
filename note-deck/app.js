@@ -130,6 +130,7 @@ function createCard() {
   const card = document.createElement('button');
   card.className = 'note-card';
   card.type = 'button';
+  wireNavigation(card);
   anchor.append(card);
   deck.append(anchor);
   return { anchor, card, contentKey: null };
@@ -438,6 +439,13 @@ function handleWheel(event) {
 }
 window.addEventListener('wheel', handleWheel, { capture: true, passive: false });
 document.addEventListener('wheel', handleWheel, { capture: true, passive: false });
+function wireNavigation(element) {
+  element.addEventListener('keydown', handleDirectionalKey);
+  element.addEventListener('wheel', handleWheel, { passive: false });
+}
+wireNavigation(newButton);
+wireNavigation(noteText);
+wireNavigation(deleteButton);
 if (inputDebug) window.addEventListener('scroll', () => {
   inputCounts.scrolls += 1;
   reportInput('scroll');
