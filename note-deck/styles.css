@@ -93,7 +93,7 @@ button { cursor: pointer; }
 .card-body { margin: 0; font-size: clamp(16px, 3vw, 20px); line-height: 1.35; overflow-wrap: anywhere; white-space: pre-wrap; }
 
 .new-note-actions { z-index: 30; display: flex; flex-direction: column; align-items: center; gap: 7px; }
-.voice-hint { margin: 0; color: #aebbd0; font-size: clamp(12px, 2.2vw, 14px); text-align: center; }
+.input-hint { margin: 0; color: #aebbd0; font-size: clamp(12px, 2.2vw, 14px); text-align: center; }
 
 .action-row {
   z-index: 30;
