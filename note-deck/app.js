@@ -13,6 +13,7 @@ const status = document.getElementById('status');
 const newButton = document.getElementById('new-note');
 const editor = document.getElementById('note-editor');
 const editorNumber = document.getElementById('editor-number');
+const editorDate = document.getElementById('editor-date');
 const noteText = document.getElementById('note-text');
 const deleteButton = document.getElementById('delete-note');
 const deleteConfirm = document.getElementById('delete-confirm');
@@ -57,6 +58,7 @@ let nextNumber = initialState.nextNumber;
 let selectedIndex = 0;
 let editingId = null;
 let pointerStart = null;
+let suppressCardClick = false;
 let editorHistoryActive = false;
 let renderVersion = 0;
 const renderedCards = new Map();
@@ -76,9 +78,12 @@ function titleFor(text) {
   const firstLine = text.trim().split('\n')[0].trim() || 'Untitled note';
   return firstLine.length > 48 ? firstLine.slice(0, 47).trimEnd() + '…' : firstLine;
 }
+function visibleTitleFor(text) {
+  return text.split('\n')[0] || 'Untitled note';
+}
 function bodyFor(text) {
   const lineBreak = text.indexOf('\n');
-  return lineBreak < 0 ? '' : text.slice(lineBreak + 1).trim();
+  return lineBreak < 0 ? '' : text.slice(lineBreak + 1);
 }
 function formatDate(value) {
   const date = new Date(value);
@@ -125,18 +130,22 @@ function updateCard(entry, note, index, offset) {
     const topLine = createTextElement('div', 'card-topline', '');
     topLine.append(
       createTextElement('span', 'card-index', note.number === null ? '' : String(note.number)),
-      createTextElement('span', 'card-kind', note.sample ? 'Note Deck' : 'Note')
+      createTextElement('span', 'card-date', formatDate(note.createdAt))
+    );
+    const content = createTextElement('div', 'card-content', '');
+    content.append(
+      createTextElement('h2', 'card-title', visibleTitleFor(note.text)),
+      createTextElement('p', 'card-body', bodyFor(note.text))
     );
     card.append(
       topLine,
       createTextElement('div', 'card-rule', ''),
-      createTextElement('h2', 'card-title', titleFor(note.text)),
-      createTextElement('p', 'card-body', bodyFor(note.text)),
-      createTextElement('div', 'card-date', formatDate(note.createdAt))
+      content
     );
   }
 
   card.onclick = () => {
+    if (suppressCardClick) return;
     const currentIndex = shownNotes().findIndex(item => item.id === note.id);
     if (currentIndex < 0) return;
     if (currentIndex !== selectedIndex) { selectCard(currentIndex); return; }
@@ -214,6 +223,7 @@ function openEditor(id = null) {
   const note = notes.find(item => item.id === id);
   noteText.value = note?.text || '';
   editorNumber.textContent = String(note?.number || nextNumber);
+  editorDate.textContent = note ? formatDate(note.createdAt) : '';
   deleteButton.hidden = !note;
   deleteConfirm.hidden = true;
   editor.showModal();
@@ -250,6 +260,7 @@ function saveDraft() {
   }
   deleteButton.hidden = false;
   editorNumber.textContent = String(notes.find(note => note.id === editingId)?.number || nextNumber);
+  editorDate.textContent = formatDate(notes.find(note => note.id === editingId)?.createdAt);
   return true;
 }
 
@@ -322,6 +333,18 @@ document.getElementById('confirm-delete').addEventListener('click', () => {
 
 document.addEventListener('keydown', event => {
   if (editor.open || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    const current = shownNotes()[selectedIndex];
+    const card = renderedCards.get(current.id)?.card;
+    const content = card?.querySelector('.card-content');
+    const direction = event.key === 'ArrowDown' ? 1 : -1;
+    if (document.activeElement === card && content &&
+        (direction > 0 ? content.scrollTop + content.clientHeight < content.scrollHeight - 1 : content.scrollTop > 1)) {
+      event.preventDefault();
+      content.scrollTop += direction * 90;
+      return;
+    }
+  }
   if (event.key === 'ArrowLeft') { event.preventDefault(); selectCard(selectedIndex - 1); }
   if (event.key === 'ArrowRight') { event.preventDefault(); selectCard(selectedIndex + 1); }
 });
@@ -332,6 +355,11 @@ deck.addEventListener('pointerup', event => {
   const dx = event.clientX - pointerStart.x;
   const dy = event.clientY - pointerStart.y;
   pointerStart = null;
+  if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) {
+    suppressCardClick = true;
+    setTimeout(() => { suppressCardClick = false; }, 100);
+    return;
+  }
   if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) selectCard(selectedIndex + (dx < 0 ? 1 : -1));
 });
 deck.addEventListener('pointercancel', () => { pointerStart = null; });

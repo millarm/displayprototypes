@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#000000" />
     <meta name="description" content="A small deck of notes for Meta Ray-Ban Display glasses." />
     <title>Note Deck</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='10' y='12' width='42' height='40' rx='8' fill='%23c6f46a' transform='rotate(8 31 32)'/%3E%3Crect x='8' y='10' width='42' height='40' rx='8' fill='%231b2432' stroke='%23e5eeff' stroke-width='3'/%3E%3Cpath d='M17 24h24M17 32h20' stroke='%23e5eeff' stroke-width='3'/%3E%3C/svg%3E" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./styles.css" />
     <script src="./app.js" defer></script>
   </head>
@@ -15,8 +15,9 @@
     <main class="app-shell">
       <section class="deck-view" aria-label="Note cards">
         <div class="deck" id="deck"></div>
-        <div class="action-row">
+        <div class="new-note-actions">
           <button class="action-button" id="new-note" type="button">＋ New note</button>
+          <p class="voice-hint">While open: “Hey Meta, make a note…”</p>
         </div>
       </section>
       <p id="status" class="sr-only" role="status"></p>
@@ -26,7 +27,7 @@
       <div class="editor-card">
         <div class="card-topline">
           <span class="card-index" id="editor-number"></span>
-          <span class="card-kind">Note</span>
+          <span class="card-date" id="editor-date"></span>
         </div>
         <div class="card-rule"></div>
         <label class="sr-only" for="note-text">Note text</label>

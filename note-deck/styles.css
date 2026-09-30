@@ -80,17 +80,20 @@ button { cursor: pointer; }
 }
 
 .card-anchor[data-current="false"] .note-card { color: #cbd6e5; }
-.card-anchor[data-current="false"] .card-body,
-.card-anchor[data-current="false"] .card-date { opacity: 0; }
-.card-body, .card-date { transition: opacity 220ms ease; }
+.card-anchor[data-current="false"] .card-body { opacity: 0; }
+.card-body { transition: opacity 220ms ease; }
 
-.card-topline { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.card-topline { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .card-index { font-size: clamp(14px, 2.5vw, 17px); color: #c6f46a; font-weight: 700; }
-.card-kind { font-size: clamp(11px, 2.1vw, 13px); color: #b9c5d6; text-transform: uppercase; letter-spacing: .12em; }
-.card-rule { width: 100%; height: 1px; background: rgba(232,241,255,.28); margin: clamp(13px, 2.6vh, 20px) 0; }
+.card-date { color: #aebbd0; font-size: clamp(12px, 2.3vw, 14px); }
+.card-rule { flex: 0 0 auto; width: 100%; height: 1px; background: rgba(232,241,255,.28); margin: clamp(13px, 2.6vh, 20px) 0; }
+.card-content { flex: 1; min-height: 0; width: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.card-content::-webkit-scrollbar { display: none; }
 .card-title { margin: 0 0 12px; font-size: clamp(21px, 4.4vw, 30px); line-height: 1.15; font-weight: 720; overflow-wrap: anywhere; }
-.card-body { margin: 0; font-size: clamp(16px, 3vw, 20px); line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 8; overflow-wrap: anywhere; white-space: pre-line; }
-.card-date { margin-top: auto; padding-top: 14px; color: #aebbd0; font-size: clamp(12px, 2.3vw, 14px); }
+.card-body { margin: 0; font-size: clamp(16px, 3vw, 20px); line-height: 1.35; overflow-wrap: anywhere; white-space: pre-wrap; }
+
+.new-note-actions { z-index: 30; display: flex; flex-direction: column; align-items: center; gap: 7px; }
+.voice-hint { margin: 0; color: #aebbd0; font-size: clamp(12px, 2.2vw, 14px); text-align: center; }
 
 .action-row {
   z-index: 30;
@@ -164,5 +167,5 @@ button { cursor: pointer; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card-anchor, .note-card, .card-body, .card-date { transition: none; }
+  .card-anchor, .note-card, .card-body { transition: none; }
 }
