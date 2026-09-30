@@ -10,6 +10,7 @@ const emptyCard = {
 };
 
 const deck = document.getElementById('deck');
+const appShell = document.querySelector('.app-shell');
 const status = document.getElementById('status');
 const newButton = document.getElementById('new-note');
 const editor = document.getElementById('note-editor');
@@ -264,13 +265,12 @@ function openEditor(id = null) {
   editorDate.textContent = note ? formatDate(note.createdAt) : '';
   deleteButton.hidden = !note;
   deleteConfirm.hidden = true;
-  editor.showModal();
-  editor.scrollTop = SCROLL_MIDPOINT;
+  editor.show();
+  appShell.inert = true;
   history.pushState({ noteDeckEditor: true }, '');
   editorHistoryActive = true;
   noteText.focus({ preventScroll: true });
   requestAnimationFrame(() => {
-    editor.scrollTop = SCROLL_MIDPOINT;
     noteText.focus({ preventScroll: true });
   });
 }
@@ -309,6 +309,7 @@ function saveDraft() {
 function finishEditor(fromHistory = false) {
   if (!editor.open || !saveDraft()) return;
   editor.close();
+  appShell.inert = false;
   editingId = null;
   deleteConfirm.hidden = true;
   render();
@@ -348,6 +349,17 @@ editor.addEventListener('cancel', event => {
     finishEditor();
   }
 });
+window.addEventListener('keydown', event => {
+  if (event.key !== 'Escape' || !editor.open) return;
+  event.preventDefault();
+  if (!deleteConfirm.hidden) {
+    deleteConfirm.hidden = true;
+    deleteButton.hidden = false;
+    deleteButton.focus({ preventScroll: true });
+  } else {
+    finishEditor();
+  }
+}, true);
 window.addEventListener('popstate', () => {
   if (editor.open) finishEditor(true);
 });
@@ -461,9 +473,8 @@ function handleScroll(event) {
   if (seenScrollEvents.has(event)) return;
   seenScrollEvents.add(event);
   inputCounts.scrolls += 1;
-  const surface = editor.open ? editor : document.scrollingElement;
-  const fromSurface = editor.open ? event.target === editor
-    : event.target === document || event.target === window || event.target === surface;
+  const surface = document.scrollingElement;
+  const fromSurface = event.target === document || event.target === window || event.target === surface;
   reportInput(`scroll ${fromSurface ? 'surface' : event.target?.id || 'inner'} ${Math.round(surface.scrollTop - SCROLL_MIDPOINT)}`);
   if (!fromSurface) return;
   const offset = surface.scrollTop - SCROLL_MIDPOINT;
@@ -475,7 +486,6 @@ function handleScroll(event) {
   moveVertically(Math.sign(offset));
 }
 window.addEventListener('scroll', handleScroll, true);
-editor.addEventListener('scroll', handleScroll, true);
 
 deck.addEventListener('pointerdown', event => { pointerStart = { x: event.clientX, y: event.clientY }; });
 deck.addEventListener('pointerup', event => {
