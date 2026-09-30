@@ -9,7 +9,7 @@ A card-shaped note list for Meta Ray-Ban Display glasses. The centre card is upr
 - Pinch to select the front card and edit or append to its text. Select the centred **New note** button to create one.
 - The note field receives focus immediately. Select it to open the glasses' dictation composer; web apps cannot open that composer with programmatic focus alone.
 - Changes save automatically as text is entered. Use the glasses' Back gesture to return to the deck. **Delete card** sits below an open card and asks for confirmation.
-- With the app open and the glasses' WebMCP preview available, try “Hey Meta, make a note: [your words].” Meta AI can call the app's `make_note` action. Outside the open app, generic voice invocation is not provided by this web app.
+- With the app open and the glasses' WebMCP preview available, try “Hey Meta, add a card to Note Deck: [your words].” Meta AI can call the app's `add_card_to_note_deck` action. The generic “make a note” phrase may start Meta's own audio-note recorder. Outside the open app, voice invocation is not provided by this web app.
 
 The card's creation date appears beside its number. The hosted `icon.svg` is the browser favicon. The glasses' app grid uses `.well-known/meta-wearables-manifest.json` and its transparent monochrome `launcher-icon.svg`, tinted by the manifest's theme color. Replit Static does not serve the hidden directory directly, so `.replit` rewrites the required URL to a copy in the public directory. The icon shown in the app grid may refresh when the glasses reconnect or the app is re-added.
 

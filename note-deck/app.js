@@ -368,8 +368,8 @@ function registerVoiceTool() {
   const context = document.modelContext || navigator.modelContext;
   if (!context?.registerTool) return;
   Promise.resolve(context.registerTool({
-    name: 'make_note',
-    description: 'Create a numbered note card in Note Deck from the user’s spoken words. Without content, open the note editor.',
+    name: 'add_card_to_note_deck',
+    description: 'Add a text card to the open Note Deck web app. The wearer may say “add a card to Note Deck” and dictate its content. If no content is given, open the Note Deck editor for a new card. This is for Note Deck cards, not Meta audio notes or recordings.',
     inputSchema: {
       type: 'object',
       properties: { content: { type: 'string', description: 'The words to save on the card.' } },
