@@ -61,6 +61,8 @@ let pointerStart = null;
 let suppressCardClick = false;
 let editorHistoryActive = false;
 let renderVersion = 0;
+let lastHorizontalKey = '';
+let lastHorizontalMoveAt = -Infinity;
 const renderedCards = new Map();
 
 function persistState() {
@@ -338,38 +340,34 @@ document.getElementById('confirm-delete').addEventListener('click', () => {
 
 document.addEventListener('keydown', event => {
   if (editor.open || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+  event.preventDefault();
+
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    const now = performance.now();
+    if (event.repeat || (event.key === lastHorizontalKey && now - lastHorizontalMoveAt < 300)) return;
+    lastHorizontalKey = event.key;
+    lastHorizontalMoveAt = now;
+    selectCard(selectedIndex + (event.key === 'ArrowRight' ? 1 : -1));
+    return;
+  }
+
   if (document.activeElement === newButton && event.key === 'ArrowUp') {
-    event.preventDefault();
     focusFrontCard();
     return;
   }
+  if (document.activeElement === newButton) return;
   const current = shownNotes()[selectedIndex];
   const card = renderedCards.get(current.id)?.card;
-  if (document.activeElement !== card) return;
-  if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-    const content = card?.querySelector('.card-content');
-    const direction = event.key === 'ArrowDown' ? 1 : -1;
-    if (content &&
-        (direction > 0 ? content.scrollTop + content.clientHeight < content.scrollHeight - 1 : content.scrollTop > 1)) {
-      event.preventDefault();
-      content.scrollTop += direction * 90;
-      return;
-    }
-    if (direction > 0) {
-      event.preventDefault();
-      newButton.focus({ preventScroll: true });
-      return;
-    }
+  const content = card?.querySelector('.card-content');
+  const direction = event.key === 'ArrowDown' ? 1 : -1;
+  if (content &&
+      (direction > 0 ? content.scrollTop + content.clientHeight < content.scrollHeight - 1 : content.scrollTop > 1)) {
+    content.scrollTop += direction * 90;
+  } else if (direction > 0) {
+    newButton.focus({ preventScroll: true });
   }
-  if (event.key === 'ArrowLeft' && selectedIndex > 0) {
-    event.preventDefault();
-    selectCard(selectedIndex - 1);
-  }
-  if (event.key === 'ArrowRight' && selectedIndex < shownNotes().length - 1) {
-    event.preventDefault();
-    selectCard(selectedIndex + 1);
-  }
-});
+}, true);
 
 deck.addEventListener('pointerdown', event => { pointerStart = { x: event.clientX, y: event.clientY }; });
 deck.addEventListener('pointerup', event => {

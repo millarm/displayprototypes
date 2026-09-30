@@ -50,7 +50,8 @@ button { cursor: pointer; }
   pointer-events: none;
 }
 
-.card-anchor[data-visible="false"] .note-card { pointer-events: none; }
+.card-anchor[aria-hidden="false"] { pointer-events: auto; }
+.card-anchor[aria-hidden="true"] .note-card { pointer-events: none; }
 
 .note-card, .editor-card {
   display: flex;
