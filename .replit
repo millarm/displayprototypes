@@ -4,6 +4,11 @@ run = "cd note-deck && python3 -m http.server 8000 --bind 0.0.0.0"
 localPort = 8000
 externalPort = 80
 
+[deployment]
+deploymentTarget = "static"
+publicDir = "note-deck"
+run = "cd note-deck && python3 -m http.server 8000 --bind 0.0.0.0"
+
 [[deployment.rewrites]]
 from = "/.well-known/meta-wearables-manifest.json"
 to = "/meta-wearables-manifest.json"
