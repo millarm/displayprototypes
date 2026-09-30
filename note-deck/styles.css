@@ -93,7 +93,7 @@ button { cursor: pointer; }
 .card-title { margin: 0 0 12px; font-size: clamp(21px, 4.4vw, 30px); line-height: 1.15; font-weight: 720; overflow-wrap: anywhere; }
 .card-body { margin: 0; font-size: clamp(16px, 3vw, 20px); line-height: 1.35; overflow-wrap: anywhere; white-space: pre-wrap; }
 
-.new-note-actions { z-index: 30; display: flex; flex-direction: column; align-items: center; gap: 7px; }
+.new-note-actions { z-index: 30; display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .input-hint { margin: 0; color: #aebbd0; font-size: clamp(12px, 2.2vw, 14px); text-align: center; }
 
 .action-row {
@@ -112,10 +112,20 @@ button { cursor: pointer; }
   font-weight: 700;
 }
 .action-button { color: #14200d; background: #c6f46a; border: 1px solid #d9ffa0; }
+#new-note { min-height: 88px; min-width: 180px; }
+.deck-view[data-focus="new"] .card-anchor[data-current="true"] .note-card {
+  border-color: #8294ad;
+  box-shadow: 0 0 26px rgba(119,158,205,.2), inset 0 1px 0 rgba(255,255,255,.12);
+}
+.deck-view[data-focus="new"] #new-note {
+  outline: 4px solid #fff;
+  outline-offset: 4px;
+  box-shadow: 0 0 22px rgba(198,244,106,.65);
+}
 .delete-button, .secondary-button { color: #f1f6ff; background: #1c2838; border: 1px solid #61728a; }
 .danger-button { color: #fff; background: #a43943; border: 1px solid #f37c82; }
-.action-button:focus-visible, .delete-button:focus-visible, .secondary-button:focus-visible, .danger-button:focus-visible,
-.note-card:focus-visible, textarea:focus-visible {
+.action-button:focus, .delete-button:focus, .secondary-button:focus, .danger-button:focus,
+.note-card:focus, textarea:focus {
   outline: 3px solid #c6f46a;
   outline-offset: 3px;
 }

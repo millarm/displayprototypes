@@ -5,7 +5,7 @@ A card-shaped note list for Meta Ray-Ban Display glasses. The centre card is upr
 ## Use
 
 - With or without the Neural Band, swipe on the glasses' temple to move left/right between cards. Adjacent cards are focusable so the glasses' directional navigation can select them. A desktop keyboard's left/right arrows and a horizontal pointer drag also work.
-- Swipe up/down to scroll a long card. At the bottom, down moves to the centred **New note** button; up returns to the card.
+- Swipe up/down to scroll a long card. At the bottom, down moves to the centred **New note** button; up returns to the card. The app handles both arrow and wheel events from the temple touchpad, and clearly highlights whichever control is selected.
 - Tap the temple or pinch to open the front card for editing. Use the glasses' two-finger Back gesture or the band's Back gesture to return to the deck.
 - The note field receives focus immediately. Select it to open the glasses' dictation composer; web apps cannot open that composer with programmatic focus alone.
 - Changes save automatically as text is entered. Use the glasses' Back gesture to return to the deck. **Delete card** sits below an open card and asks for confirmation.
@@ -22,3 +22,5 @@ Run `python3 -m http.server 8000` in this directory and open `http://localhost:8
 ## Replit hosting
 
 The `displayprototypes` repository is imported into Replit. Its **Static pages** deployment serves `note-deck` as the public directory, with no build command. The live URL is [displayprototypes.replit.app](https://displayprototypes.replit.app/). Add that URL in the Meta AI app under Display Glasses settings → App connections → Web apps → Add a web app.
+
+After a deployment, use the glasses' universal Web App menu → **Restart** to load the newest script and stylesheet. Reopening an already running app may retain the previous version.

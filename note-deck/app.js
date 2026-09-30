@@ -9,6 +9,7 @@ const emptyCard = {
 };
 
 const deck = document.getElementById('deck');
+const deckView = document.querySelector('.deck-view');
 const status = document.getElementById('status');
 const newButton = document.getElementById('new-note');
 const editor = document.getElementById('note-editor');
@@ -63,6 +64,7 @@ let editorHistoryActive = false;
 let renderVersion = 0;
 let lastHorizontalKey = '';
 let lastHorizontalMoveAt = -Infinity;
+let lastVerticalMoveAt = -Infinity;
 const renderedCards = new Map();
 
 function persistState() {
@@ -155,6 +157,7 @@ function updateCard(entry, note, index, offset) {
     openEditor(note.sample ? null : note.id);
   };
   card.onfocus = () => {
+    deckView.dataset.focus = 'card';
     const focusedIndex = shownNotes().findIndex(item => item.id === note.id);
     if (focusedIndex >= 0 && focusedIndex !== selectedIndex) selectCard(focusedIndex);
   };
@@ -301,6 +304,7 @@ function createNote(content) {
   return true;
 }
 
+newButton.addEventListener('focus', () => { deckView.dataset.focus = 'new'; });
 newButton.addEventListener('click', () => openEditor());
 noteText.addEventListener('input', saveDraft);
 noteText.addEventListener('change', saveDraft);
@@ -338,6 +342,23 @@ document.getElementById('confirm-delete').addEventListener('click', () => {
   finishEditor();
 });
 
+function moveVertically(direction) {
+  if (document.activeElement === newButton) {
+    if (direction < 0) focusFrontCard();
+    return;
+  }
+
+  const current = shownNotes()[selectedIndex];
+  const card = renderedCards.get(current.id)?.card;
+  const content = card?.querySelector('.card-content');
+  if (content &&
+      (direction > 0 ? content.scrollTop + content.clientHeight < content.scrollHeight - 1 : content.scrollTop > 1)) {
+    content.scrollTop += direction * 90;
+  } else if (direction > 0) {
+    newButton.focus({ preventScroll: true });
+  }
+}
+
 document.addEventListener('keydown', event => {
   if (editor.open || event.altKey || event.ctrlKey || event.metaKey) return;
   if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
@@ -352,22 +373,18 @@ document.addEventListener('keydown', event => {
     return;
   }
 
-  if (document.activeElement === newButton && event.key === 'ArrowUp') {
-    focusFrontCard();
-    return;
-  }
-  if (document.activeElement === newButton) return;
-  const current = shownNotes()[selectedIndex];
-  const card = renderedCards.get(current.id)?.card;
-  const content = card?.querySelector('.card-content');
-  const direction = event.key === 'ArrowDown' ? 1 : -1;
-  if (content &&
-      (direction > 0 ? content.scrollTop + content.clientHeight < content.scrollHeight - 1 : content.scrollTop > 1)) {
-    content.scrollTop += direction * 90;
-  } else if (direction > 0) {
-    newButton.focus({ preventScroll: true });
-  }
+  lastVerticalMoveAt = performance.now();
+  moveVertically(event.key === 'ArrowDown' ? 1 : -1);
 }, true);
+
+document.addEventListener('wheel', event => {
+  if (editor.open || Math.abs(event.deltaY) <= Math.abs(event.deltaX) || !event.deltaY) return;
+  event.preventDefault();
+  const now = performance.now();
+  if (now - lastVerticalMoveAt < 350) return;
+  lastVerticalMoveAt = now;
+  moveVertically(Math.sign(event.deltaY));
+}, { capture: true, passive: false });
 
 deck.addEventListener('pointerdown', event => { pointerStart = { x: event.clientX, y: event.clientY }; });
 deck.addEventListener('pointerup', event => {
