@@ -5,9 +5,10 @@ A card-shaped note list for Meta Ray-Ban Display glasses. The centre card is upr
 ## Use
 
 - With or without the Neural Band, swipe on the glasses' temple to move left/right between cards. Adjacent cards are focusable so the glasses' directional navigation can select them. A desktop keyboard's left/right arrows and a horizontal pointer drag also work.
-- Swipe up/down to scroll a long card. At the bottom, down moves to the centred **New note** button; up returns to the card. The app handles both arrow and wheel events from the temple touchpad, and clearly highlights whichever control is selected.
+- Swipe up/down to scroll a long card. At the bottom, down moves to the centred **New note** button; up returns to the card. The app handles both arrow and wheel events from the temple touchpad.
 - Tap the temple or pinch to open the front card for editing. Use the glasses' two-finger Back gesture or the band's Back gesture to return to the deck.
 - The note field receives focus immediately. Select it to open the glasses' dictation composer; web apps cannot open that composer with programmatic focus alone.
+- On an existing note in the editor, down moves from the text field to **Delete card** once the text is scrolled to the end; up returns to the text field. A new unsaved note has no Delete action to move to.
 - Changes save automatically as text is entered. Use the glasses' Back gesture to return to the deck. **Delete card** sits below an open card and asks for confirmation.
 - The deck no longer shows a “Hey Meta” prompt because Meta AI has not routed either tested phrase to this app on the glasses: “make a note” started Meta's audio-note recorder, and “add a card to Note Deck” returned that it could not create decks or cards. Use **New note**, then select the text field for the glasses' dictation composer. The experimental `add_card_to_note_deck` WebMCP action remains registered for devices where Meta enables it, but should not be presented as a working voice shortcut until it passes an on-device test.
 

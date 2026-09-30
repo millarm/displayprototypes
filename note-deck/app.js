@@ -9,7 +9,6 @@ const emptyCard = {
 };
 
 const deck = document.getElementById('deck');
-const deckView = document.querySelector('.deck-view');
 const status = document.getElementById('status');
 const newButton = document.getElementById('new-note');
 const editor = document.getElementById('note-editor');
@@ -18,6 +17,28 @@ const editorDate = document.getElementById('editor-date');
 const noteText = document.getElementById('note-text');
 const deleteButton = document.getElementById('delete-note');
 const deleteConfirm = document.getElementById('delete-confirm');
+const inputDebug = new URLSearchParams(location.search).has('input-debug') ? document.createElement('output') : null;
+const inputCounts = { keys: 0, wheels: 0, scrolls: 0 };
+let lastInputSignal = 'none';
+if (inputDebug) {
+  inputDebug.id = 'input-debug';
+  inputDebug.setAttribute('aria-live', 'polite');
+  document.body.append(inputDebug);
+}
+
+function reportInput(signal = lastInputSignal) {
+  if (!inputDebug) return;
+  lastInputSignal = signal;
+  requestAnimationFrame(() => {
+    const focused = document.activeElement === newButton ? 'New note'
+      : document.activeElement === noteText ? 'Text field'
+      : document.activeElement === deleteButton ? 'Delete card'
+      : document.activeElement?.classList.contains('note-card') ? 'Card' : 'Other';
+    inputDebug.textContent = `Last: ${lastInputSignal} | Keys: ${inputCounts.keys} | Wheels: ${inputCounts.wheels} | Scrolls: ${inputCounts.scrolls} | Focus: ${focused}`;
+  });
+}
+reportInput('none');
+if (inputDebug) document.addEventListener('focusin', () => reportInput());
 
 function validNote(note) {
   return note && typeof note.id === 'string' && typeof note.text === 'string' && typeof note.createdAt === 'string';
@@ -157,7 +178,6 @@ function updateCard(entry, note, index, offset) {
     openEditor(note.sample ? null : note.id);
   };
   card.onfocus = () => {
-    deckView.dataset.focus = 'card';
     const focusedIndex = shownNotes().findIndex(item => item.id === note.id);
     if (focusedIndex >= 0 && focusedIndex !== selectedIndex) selectCard(focusedIndex);
   };
@@ -304,7 +324,6 @@ function createNote(content) {
   return true;
 }
 
-newButton.addEventListener('focus', () => { deckView.dataset.focus = 'new'; });
 newButton.addEventListener('click', () => openEditor());
 noteText.addEventListener('input', saveDraft);
 noteText.addEventListener('change', saveDraft);
@@ -343,6 +362,23 @@ document.getElementById('confirm-delete').addEventListener('click', () => {
 });
 
 function moveVertically(direction) {
+  if (editor.open) {
+    if (!deleteConfirm.hidden) return;
+    if (document.activeElement === deleteButton) {
+      if (direction < 0) noteText.focus({ preventScroll: true });
+      return;
+    }
+    if (document.activeElement !== noteText) return;
+    if (direction > 0 && noteText.scrollTop + noteText.clientHeight < noteText.scrollHeight - 1) {
+      noteText.scrollTop += 90;
+    } else if (direction < 0 && noteText.scrollTop > 1) {
+      noteText.scrollTop -= 90;
+    } else if (direction > 0 && !deleteButton.hidden) {
+      deleteButton.focus({ preventScroll: true });
+    }
+    return;
+  }
+
   if (document.activeElement === newButton) {
     if (direction < 0) focusFrontCard();
     return;
@@ -359,10 +395,14 @@ function moveVertically(direction) {
   }
 }
 
-document.addEventListener('keydown', event => {
-  if (editor.open || event.altKey || event.ctrlKey || event.metaKey) return;
+window.addEventListener('keydown', event => {
+  if (event.altKey || event.ctrlKey || event.metaKey) return;
   if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+  inputCounts.keys += 1;
+  reportInput(event.key);
+  if (editor.open && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) return;
   event.preventDefault();
+  event.stopPropagation();
 
   if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
     const now = performance.now();
@@ -377,14 +417,20 @@ document.addEventListener('keydown', event => {
   moveVertically(event.key === 'ArrowDown' ? 1 : -1);
 }, true);
 
-document.addEventListener('wheel', event => {
-  if (editor.open || Math.abs(event.deltaY) <= Math.abs(event.deltaX) || !event.deltaY) return;
+window.addEventListener('wheel', event => {
+  inputCounts.wheels += 1;
+  reportInput(`wheel ${Math.round(event.deltaX)},${Math.round(event.deltaY)}`);
+  if (Math.abs(event.deltaY) <= Math.abs(event.deltaX) || !event.deltaY) return;
   event.preventDefault();
   const now = performance.now();
   if (now - lastVerticalMoveAt < 350) return;
   lastVerticalMoveAt = now;
   moveVertically(Math.sign(event.deltaY));
 }, { capture: true, passive: false });
+if (inputDebug) window.addEventListener('scroll', () => {
+  inputCounts.scrolls += 1;
+  reportInput('scroll');
+}, true);
 
 deck.addEventListener('pointerdown', event => { pointerStart = { x: event.clientX, y: event.clientY }; });
 deck.addEventListener('pointerup', event => {
