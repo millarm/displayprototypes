@@ -4,10 +4,10 @@ These notes come from testing Note Deck on Meta Ray-Ban Display glasses with the
 
 ## What we observed
 
-- One-finger temple swipes moved left and right between cards. **The app was receiving those inputs:** focus moved to an adjacent card, and the card's `focus` handler updated the deck. A temple tap selected a card; the two-finger Back gesture returned from the editor. Native glasses menus also responded to up and down swipes, so the hardware was working.
+- One-finger temple swipes moved left and right between cards. A temple tap selected a card; the two-finger Back gesture returned from the editor. Native glasses menus also responded to up and down swipes, so the hardware was working.
 - Up and down swipes did **not** navigate Note Deck while its page had `overflow: hidden`. Adding more `ArrowUp`/`ArrowDown` and `wheel` handlers did not help.
 - An early input-test page received arrow and scroll/wheel activity, but it had a scrollable body. It was therefore not an accurate reproduction of Note Deck's locked layout.
-- In Note Deck's `?input-debug=1` readout, focus changes incremented while key and wheel counts did not. The horizontal card movement came through focus changes; absence of key/wheel counts did **not** mean the app received no input. It showed only that the vertical movement was not reaching our key or wheel handlers. Once a scroll range was present, scroll events provided a usable vertical signal.
+- In Note Deck's `?input-debug=1` readout, focus changes incremented while key and wheel counts did not. That readout alone did not tell us what the browser did with the vertical gesture. Once a scroll range was present, scroll events provided a usable vertical signal.
 - Making the whole page scrollable restored vertical navigation, but exposed a scrollbar at the right edge. CSS rules intended to hide the root scrollbar did not remove it on the glasses.
 - Making the full-screen editor itself scrollable produced a screen-edge focus box and disrupted selection/navigation in the editor. Keeping the editor non-scrollable and letting a shared ancestor receive the scroll resolved that regression.
 
@@ -36,8 +36,8 @@ The relevant implementation is in [`note-deck/index.html`](note-deck/index.html)
 
 1. Check whether the same gesture works in the glasses' native menus. This separates a device input problem from an app problem.
 2. Reproduce the **actual app layout**, including its overflow and focus behaviour. A standalone test page that scrolls can receive events that the app never sees.
-3. Open Note Deck with `?input-debug=1` during a device test. Compare key, wheel, scroll, and focus counts **by direction**. Moving cards confirms horizontal input reaches the app even if key/wheel counts stay at zero. The readout is diagnostic only; normal users should open the URL without that query parameter.
+3. Open Note Deck with `?input-debug=1` during a device test. Compare key, wheel, scroll, and focus counts while moving in each direction. The readout is diagnostic only; normal users should open the URL without that query parameter.
 4. Inspect which element has focus after each movement. A full-screen scrollable dialog may take focus and show a border around the screen instead of exposing its text field or button.
 5. Test the deck and editor separately, with short and long notes. Confirm down, up, selection, and Back on the glasses after deployment. Restart the Web App from the glasses' universal menu to load updated assets.
 
-The key lesson is that a vertical gesture can be expressed through **scrolling of a scrollable ancestor**. Preventing that scroll can remove the vertical signal while horizontal focus navigation continues to work. Diagnose each direction and event path separately.
+The key lesson is that a vertical gesture can be expressed through **scrolling of a scrollable ancestor**. Preventing that scroll at the page or editor level can remove the only signal the app receives, even when horizontal navigation and native device menus still work.
