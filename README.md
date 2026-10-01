@@ -8,4 +8,6 @@ Experiments for Meta Ray-Ban Display glasses. Each prototype lives in its own di
 
 The repository root has a Replit preview command for Note Deck. Each app keeps its own source and deployment settings in its directory.
 
+See [Navigation learnings](NAVIGATION_LEARNINGS.md) before implementing temple swipe navigation in another glasses web app.
+
 Note Deck is published at [displayprototypes.replit.app](https://displayprototypes.replit.app/). Its Replit static deployment serves the `note-deck` directory.
